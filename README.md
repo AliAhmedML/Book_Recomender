@@ -1,12 +1,12 @@
-# 🚖 Taxi Trip Analysis
+# 📖 Book Recommender
 
-**A machine learning-based system for analyzing and predicting outcomes of taxi trips using structured trip data.**  
+**An LLM-powered system for analyzing book metadata and reader preferences to generate personalized reading recommendations.**  
 
 ![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)
 
 ## 📌 Overview  
 
-This project implements a **taxi trip analysis system** using machine learning. It covers data preprocessing, feature engineering, and model training to effectively handle structured taxi trip datasets.
+This project is an LLM-powered Book Recommender App that leverages Large Language Models (LLMs) to analyze book metadata, descriptions, and user preferences. Unlike traditional recommenders that rely only on ratings or collaborative filtering, this system uses semantic understanding of text to provide smarter and more personalized recommendations.
 
 ---
 
@@ -25,14 +25,14 @@ This project implements a **taxi trip analysis system** using machine learning. 
 2. Create a dedicated environment:  
 
    ```bash  
-   conda create -p venv_Taxi python==3.11 
+   conda create -p venv_Book python==3.11 
 
 ## 🛠️ Environment Setup
 
 ### Activate the Conda Environment
 
 ```bash
-conda activate ./venv_Taxi
+conda activate ./venv_Book
 ```
 
 ## 🛠️ Installation
@@ -44,8 +44,6 @@ Ensure all dependencies are installed by running:
 ```bash
 pip install -r requirements.txt
 ```
-
-Download and install [CUDA Toolkit 12.5.0](https://developer.nvidia.com/cuda-12-5-0-download-archive).  
 
 ## 🔍 Data Preprocessing Guide
 
@@ -60,98 +58,57 @@ Download and install [CUDA Toolkit 12.5.0](https://developer.nvidia.com/cuda-12-
    - Apply either removal or imputation strategies
    - Maintain records of all modifications
 
-3. **Exploratory Visualization**
-   - Generate distribution plots for numerical features
-   - Create correlation visualizations
-   - Examine feature relationships
+3. **Missing Values Analysis**
+   - Visualize the distribution of missing data across columns  
+   - Identify patterns of missingness
+   - Explore relationships between missing values and other features to check if missingness itself is informative
+   - Use visual tools to better understand data quality
 
-4. **Outlier Management**
-   - Detect outliers using IQR or Z-score methods
-   - Handle them if they are likely to affect model performance or data quality
-   - For small counts: remove rows with outliers
-   - For larger counts: cap outliers using boundary values
-   - Document all outlier handling steps clearlys
+4. **Feature Engineering**
+   - Create new features from existing data
+   - Transform categorical and textual data into numerical representations suitable for modeling
+   - Generate missing value indicators (flags) where useful  
+   - Document all feature engineering steps clearly to ensure reproducibility
 
-5. **Forming train and test datasets**
-   - make X and Y variables
-   - splitting data into train and test sets
-   - standarize train data set
+5. **Data Preparation**
+   - To prepare the dataset for downstream NLP tasks, we export the tagged book descriptions into a plain text file
+   - Load the text file and split it into smaller chunks for better handling by embedding models
+   - Generate semantic embeddings using a transformer model and store them in a Chroma vector database for efficient similarity search
+   - Simplify detailed book categories into broader groups for easier analysis and modeling
 
-6. **Data Transformation**
-   - Identify skewness using skewness score or visual inspection (histogram, boxplot)
-   - Handle skewness if skewness score > 0.5 or < -0.5 (moderate) or > 1.0 or < -1.0 (strong)
-   - For moderate skewness: apply log, square root, or Box-Cox transformation
-   - For strong skewness: apply PowerTransformer or Yeo-Johnson transformation
-
-7. **Data Standarization**
-   - Apply standardization when features have different units or scales  
-   - Handle features with non-normal distributions carefully: standardize after skewness correction  
-   - Use `StandardScaler` for models sensitive to feature scales (e.g., SVM, KNN, Logistic Regression, PCA)
-   - Standardize after splitting into train-test sets to prevent data leakage  
-   - Verify the standardized data by checking mean ≈ 0 and standard deviation ≈ 1
-
-8. **Feature Correlation**
-   - Analyze multicollinearity using correlation matrix or Variance Inflation Factor (VIF)
-   - Handle multicollinearity if correlation coefficient > 0.8 or VIF > 5
-   - For high multicollinearity: remove one of the correlated features or apply dimensionality reduction (e.g., PCA)
-   - Document correlation findings and actions taken
-
-9. **Transforming Train and Test Data Sets into GPU**
-    - Convert train and test data sets into GPU-supported data structures
-    - Use libraries such as cuDF and cuML for GPU acceleration
-    - Ensure compatibility between data format and GPU models
-
-## 🎯 Training and Evaluating
-
-1. **Model Training**
-   - Train the following classifiers:
-     - KNeighborsRegressor
-     - LinearRegression
-     - RandomForestRegressor
-     - LinearSVR
-     - XGBRegressor
-   - Ensure all models are trained on the prepared and standardized dataset.
-
-2. **Model Evaluation**
-   - Evaluate each model using the following metrics:
-     - R2 Score
-     - MSE Score
-     - MAE Score
-   - Document and compare performance across all metrics.
-
-3. **Model Selection and Saving**
-   - Select the model with the best performance according to project requirements.
-   - Save the chosen model using appropriate serialization methods (pickle).
-   - Prepare the saved model for integration into the prediction system.
+6. **Emotion Classification in Book Descriptions**
+   - Initialize a Hugging Face `pipeline` with the model `j-hartmann/emotion-english-distilroberta-base`
+   - Define the target emotion labels: `anger`, `disgust`, `fear`, `joy`, `sadness`, `surprise`, `neutral`
+   - Create helper function `calculate_max_emotion_scores` to compute the maximum score for each emotion across sentences
+   - Split each book description into sentences and classify emotions per sentence
+   - Aggregate predictions by taking the maximum score per emotion
+   - Store results for each book (`isbn13`) and its corresponding emotion scores
 
 ## 📁 Project Structure
 
 1. **Main Application**
-   - `manage.py`: Django's command-line utility for administrative tasks.
+   - `main.py`: Entry point to launch the Gradio dashboard.
 
-2. **Core Application**
-   - `predictor/`: Main app handling ML prediction logic.
-     - `views.py`: Handles prediction view logic and rendering results.
-     - `forms.py`: Defines form fields for user input.
-     - `urls.py`: URL routing for the predictor app.
-     - `templates/`: Contains `home.html` and `result.html` templates.
-     - `model/`: Pickled model files (e.g., `Taxi.pkl`, `Scaler.pkl`, `PCA.pkl`, etc.)
+2. **Core Logic**
+   - `recommender.py`: Contains the `BookRecommender` class with methods for retrieving and formatting recommendations.
+   - `ui.py`: Defines the Gradio Blocks interface (query input, category/tone dropdowns, gallery output).
+   - `config.py`: Central configuration (paths, model name, fallback cover).
 
-3. **Project Configuration**
-   - `taxi_fare/`: Django project settings.
-     - `settings.py`: Project settings (DEBUG, apps, templates, etc.)
-     - `urls.py`: Root URL configuration.
-     - `wsgi.py`: WSGI entry point for deployment.
+3. **Data & Models**
+   - `assets/`: Contains static resources like images and dataset.
+     - `books_with_emotions.csv`: Dataset with book metadata and emotion scores.
+     - `cover-not-found.jpg`: Default fallback cover image.
+   - `chroma_db/`: Persisted Chroma vector database.
 
 ## 🚀 Run the App
 
-### Start the Django Application
+### Start the Gardio Application
 
 1. Make sure your virtual environment is activated:
 
    ```bash
-   conda activate ./venv_Taxi
-2. Run the Django app:
+   conda activate ./venv_Book
+2. Run the Gardio app:
 
    ```bash
-   python manage.py runserver
+   python main.py
