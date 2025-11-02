@@ -42,7 +42,7 @@ conda activate ./venv_Book
 Ensure all dependencies are installed by running:
 
 ```bash
-pip install -r requirements.txt
+pip install -r Requirements.txt
 ```
 
 ## 🔍 Data Preprocessing Guide
